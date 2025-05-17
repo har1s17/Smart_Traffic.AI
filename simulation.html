@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber Traffic Control</title>
+    <style>
+        /* Modern Cyberpunk Theme */
+        body {
+            background: #0a0a12;
+            margin: 0;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Segoe UI', system-ui;
+        }
+
+        .city-map {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: grid;
+            place-items: center;
+        }
+
+        .road {
+            position: absolute;
+            background: #2a2a35;
+        }
+
+        .road.horizontal {
+            width: 100%;
+            height: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+        }
+
+        .road.vertical {
+            height: 100%;
+            width: 6px;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+        }
+
+        .junction {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.1));
+        }
+
+        .junction1 { top: 10%; left: 50%; transform: translateX(-50%); }
+        .junction2 { right: 10%; top: 50%; transform: translateY(-50%); }
+        .junction3 { bottom: 10%; left: 50%; transform: translateX(-50%); }
+        .junction4 { left: 10%; top: 50%; transform: translateY(-50%); }
+
+        .traffic-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .smart-signal {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .signal-container {
+            background: linear-gradient(145deg, #1a1a24, #2a2a35);
+            padding: 8px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+            border: 1px solid #00ffff;
+        }
+
+        .light {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            margin: 3px;
+            opacity: 0.3;
+            transition: all 0.3s ease, opacity 0.2s;
+        }
+
+        .light.active {
+            opacity: 1;
+            filter: drop-shadow(0 0 8px currentColor);
+        }
+
+        .red { background: #ff3366; box-shadow: inset 0 0 8px #ff0066; }
+        .yellow { background: #ffff00; box-shadow: inset 0 0 8px #ffff00; }
+        .green { background: #00ff88; box-shadow: inset 0 0 8px #00ff00; }
+
+        .info-panel {
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid #00ffff;
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 12px;
+            color: #00ffff;
+            text-shadow: 0 0 3px #00ffff;
+            margin-top: 5px;
+            width: 150px;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+        }
+
+        .live-feed {
+            width: 120px;
+            height: 90px;
+            border-radius: 8px;
+            object-fit: cover;
+            border: 2px solid #00ffff;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+            margin: 10px 0;
+        }
+
+        .countdown {
+            font-size: 18px;
+            font-weight: bold;
+            color: #00ff88;
+            text-shadow: 0 0 8px #00ff88;
+            margin-top: 8px;
+        }
+
+        .simulation-control {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 10px 25px;
+            font-size: 14px;
+            background: linear-gradient(45deg, #00ffff, #00ff88);
+            border: none;
+            border-radius: 20px;
+            color: #0a0a12;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(0, 255, 255, 0.3);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .simulation-control:hover { transform: scale(1.05); box-shadow: 0 0 20px rgba(0, 255, 255, 0.5); }
+        .simulation-control:active { transform: scale(0.95); }
+
+        /* Loading Spinner */
+        .spinner {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            color: white;
+            z-index: 1001;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Spinner -->
+    <div id="loading-spinner" class="spinner">
+        🚦 Initializing System...
+    </div>
+
+    <!-- City Map -->
+    <div class="city-map">
+        <div class="road horizontal"></div>
+        <div class="road vertical"></div>
+
+        <!-- Junction 1 (Top) -->
+        <div class="junction junction1">
+            <div class="traffic-container">
+                <img src="{{ junctions['junction1'] }}" class="live-feed" alt="North Junction">
+                <div class="smart-signal">
+                    <div class="signal-container">
+                        <div class="light red active" id="junction1-red"></div>
+                        <div class="light yellow" id="junction1-yellow"></div>
+                        <div class="light green" id="junction1-green"></div>
+                    </div>
+                    <div class="countdown" id="junction1-countdown">0</div>
+                </div>
+                <div class="info-panel">
+                    <p><strong>Green Time:</strong> <span id="junction1-time">0</span>s</p>
+                    <p><strong>Detected Vehicles:</strong> <span id="junction1-vehicles">0</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Junction 2 (Right) -->
+        <div class="junction junction2">
+            <div class="traffic-container">
+                <img src="{{ junctions['junction2'] }}" class="live-feed" alt="East Junction">
+                <div class="smart-signal">
+                    <div class="signal-container">
+                        <div class="light red active" id="junction2-red"></div>
+                        <div class="light yellow" id="junction2-yellow"></div>
+                        <div class="light green" id="junction2-green"></div>
+                    </div>
+                    <div class="countdown" id="junction2-countdown">0</div>
+                </div>
+                <div class="info-panel">
+                    <p><strong>Green Time:</strong> <span id="junction2-time">0</span>s</p>
+                    <p><strong>Detected Vehicles:</strong> <span id="junction2-vehicles">0</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Junction 3 (Bottom) -->
+        <div class="junction junction3">
+            <div class="traffic-container">
+                <img src="{{ junctions['junction3'] }}" class="live-feed" alt="South Junction">
+                <div class="smart-signal">
+                    <div class="signal-container">
+                        <div class="light red active" id="junction3-red"></div>
+                        <div class="light yellow" id="junction3-yellow"></div>
+                        <div class="light green" id="junction3-green"></div>
+                    </div>
+                    <div class="countdown" id="junction3-countdown">0</div>
+                </div>
+                <div class="info-panel">
+                    <p><strong>Green Time:</strong> <span id="junction3-time">0</span>s</p>
+                    <p><strong>Detected Vehicles:</strong> <span id="junction3-vehicles">0</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Junction 4 (Left) -->
+        <div class="junction junction4">
+            <div class="traffic-container">
+                <img src="{{ junctions['junction4'] }}" class="live-feed" alt="West Junction">
+                <div class="smart-signal">
+                    <div class="signal-container">
+                        <div class="light red active" id="junction4-red"></div>
+                        <div class="light yellow" id="junction4-yellow"></div>
+                        <div class="light green" id="junction4-green"></div>
+                    </div>
+                    <div class="countdown" id="junction4-countdown">0</div>
+                </div>
+                <div class="info-panel">
+                    <p><strong>Green Time:</strong> <span id="junction4-time">0</span>s</p>
+                    <p><strong>Detected Vehicles:</strong> <span id="junction4-vehicles">0</span></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Control Buttons -->
+        <button id="start-simulation" class="simulation-control">
+            <span class="icon">🚀</span> Start Simulation
+        </button>
+        <button id="stop-simulation" class="simulation-control" style="top: 80px;">
+            <span class="icon">⏹️</span> Emergency Stop
+        </button>
+        <button id="ambulance-override" class="simulation-control" style="top: 145px;">
+            <span class="icon">🚑</span> Priority Override
+        </button>
+    </div>
+
+    <script>
+        // Updated JavaScript with proper resume functionality
+        let greenTimes = {};
+        let detectedVehicles = {};
+        let ambulanceFlags = {};
+        let intervalIds = [];
+        let currentJunction = 1;
+        let isAmbulanceOverrideActive = false;
+        let isSimulationRunning = false;
+        let pauseResumeJunction = 1; // Track junction to resume from
+
+        function setTrafficLight(junctionId, color) {
+            const redLight = document.getElementById(`junction${junctionId}-red`);
+            const yellowLight = document.getElementById(`junction${junctionId}-yellow`);
+            const greenLight = document.getElementById(`junction${junctionId}-green`);
+
+            [redLight, yellowLight, greenLight].forEach(light => {
+                light.classList.remove('active');
+                light.style.opacity = '0.3';
+            });
+
+            const activeLight = document.getElementById(`junction${junctionId}-${color}`);
+            if (activeLight) {
+                activeLight.classList.add('active');
+                activeLight.style.opacity = '1';
+            }
+        }
+
+        async function fetchSimulationResults() {
+            document.getElementById('loading-spinner').style.display = 'block';
+            try {
+                const response = await fetch('/simulate');
+                const data = await response.json();
+
+                // Update ambulance flags
+                ambulanceFlags = data.ambulance_flags;
+
+                for (let i = 1; i <= 4; i++) {
+                    document.getElementById(`junction${i}-time`).textContent = data.green_times[`junction${i}`];
+                    document.getElementById(`junction${i}-vehicles`).textContent =
+                        data.detected_vehicles[`junction${i}`] || 'None';
+                }
+                return data;
+            } catch (error) {
+                console.error('Network Error:', error);
+            } finally {
+                document.getElementById('loading-spinner').style.display = 'none';
+            }
+        }
+
+        async function cycleLights() {
+            while (isSimulationRunning && !isAmbulanceOverrideActive) {
+                // Store current junction before processing
+                const processingJunction = currentJunction;
+
+                // Green phase
+                await handlePhase(processingJunction, 'green', greenTimes[`junction${processingJunction}`]);
+
+                // Only proceed if not interrupted by override
+                if (!isAmbulanceOverrideActive) {
+                    // Yellow phase
+                    await handlePhase(processingJunction, 'yellow', 2);
+
+                    // Red phase
+                    setTrafficLight(processingJunction, 'red');
+
+                    // Move to next junction
+                    currentJunction = currentJunction % 4 + 1;
+                } else {
+                    // Save the junction where we were interrupted
+                    pauseResumeJunction = processingJunction;
+                }
+            }
+        }
+
+        async function handlePhase(junction, color, duration) {
+            setTrafficLight(junction, color);
+            let remaining = duration;
+            updateCountdown(junction, remaining);
+
+            const countdownInterval = setInterval(() => {
+                remaining--;
+                updateCountdown(junction, remaining);
+            }, 1000);
+
+            intervalIds.push(countdownInterval);
+
+            await new Promise(r => setTimeout(r, duration * 1000));
+            clearInterval(countdownInterval);
+        }
+
+        function updateCountdown(junction, time) {
+            document.getElementById(`junction${junction}-countdown`).textContent = time;
+        }
+
+        async function startSimulation() {
+            if (isSimulationRunning) return;
+            isSimulationRunning = true;
+            const data = await fetchSimulationResults();
+            greenTimes = data.green_times;
+            cycleLights();
+        }
+
+        function stopSimulation() {
+            isSimulationRunning = false;
+            isAmbulanceOverrideActive = false;
+            clearAllIntervals();
+            for (let i = 1; i <= 4; i++) setTrafficLight(i, 'red');
+        }
+
+        function ambulanceOverride() {
+            if (!isSimulationRunning || isAmbulanceOverrideActive) return;
+
+            isAmbulanceOverrideActive = true;
+            pauseResumeJunction = currentJunction;
+            clearAllIntervals();
+
+            // Turn all junctions red first
+            for (let i = 1; i <= 4; i++) setTrafficLight(i, 'red');
+
+            // Find junctions with ambulance
+            Object.entries(ambulanceFlags).forEach(([junctionKey, hasAmbulance]) => {
+                if (hasAmbulance) {
+                    const junction = parseInt(junctionKey.replace('junction', ''));
+                    handleAmbulancePriority(junction);
+                }
+            });
+        }
+
+        async function handleAmbulancePriority(junction) {
+            setTrafficLight(junction, 'green');
+            updateCountdown(junction, 60);
+
+            const interval = setInterval(() => {
+                const current = parseInt(document.getElementById(`junction${junction}-countdown`).textContent);
+                document.getElementById(`junction${junction}-countdown`).textContent = current - 1;
+            }, 1000);
+
+            await new Promise(r => setTimeout(r, 60000));
+
+            clearInterval(interval);
+            setTrafficLight(junction, 'yellow');
+            await new Promise(r => setTimeout(r, 2000));
+            setTrafficLight(junction, 'red');
+
+            // Resume normal operation from paused state
+            isAmbulanceOverrideActive = false;
+            currentJunction = pauseResumeJunction; // Resume from stored junction
+            if (isSimulationRunning) cycleLights();
+        }
+
+        function clearAllIntervals() {
+            intervalIds.forEach(clearInterval);
+            intervalIds = [];
+        }
+
+        // Event listeners
+        document.getElementById('start-simulation').addEventListener('click', startSimulation);
+        document.getElementById('stop-simulation').addEventListener('click', stopSimulation);
+        document.getElementById('ambulance-override').addEventListener('click', ambulanceOverride);
+    </script>
+</body>
+</html>
