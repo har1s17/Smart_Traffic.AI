@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cyber Traffic Control</title>
     <style>
-        /* Modern Cyberpunk Theme */
+        
         body {
             background: #0a0a12;
             margin: 0;
@@ -146,7 +146,7 @@
         .simulation-control:hover { transform: scale(1.05); box-shadow: 0 0 20px rgba(0, 255, 255, 0.5); }
         .simulation-control:active { transform: scale(0.95); }
 
-        /* Loading Spinner */
+    
         .spinner {
             display: none;
             position: fixed;
@@ -160,17 +160,16 @@
     </style>
 </head>
 <body>
-    <!-- Loading Spinner -->
+    
     <div id="loading-spinner" class="spinner">
         🚦 Initializing System...
     </div>
 
-    <!-- City Map -->
     <div class="city-map">
         <div class="road horizontal"></div>
         <div class="road vertical"></div>
 
-        <!-- Junction 1 (Top) -->
+       
         <div class="junction junction1">
             <div class="traffic-container">
                 <img src="{{ junctions['junction1'] }}" class="live-feed" alt="North Junction">
