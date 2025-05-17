@@ -13,25 +13,18 @@ app = Flask(__name__)
 # Load YOLOv8 pretrained model
 model = YOLO('yolov8x.pt')
 
-# Load ONNX model for ambulance detection
-onnx_model_path = 'model.onnx'  # Path to your ONNX model
+onnx_model_path = 'model.onnx'  
 ambulance_model = ort.InferenceSession(onnx_model_path)
 
-# Vehicle weights for green time calculation
 vehicle_weights = {'car': 5, 'motorcycle': 3, 'bus': 7, 'truck': 10, 'van': 10}
 
-# Upload folder for junction images
 UPLOAD_FOLDER = 'static/uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Ensure upload folder exists
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Telegram Bot Token and Chat ID
-TELEGRAM_BOT_TOKEN = '7755373107:AAHGILKELCKNQZR5Iggsv_HVIEHxuPRlMl0'
-TELEGRAM_CHAT_ID = '7565137984'
-
-# Initialize Telegram Bot
+TELEGRAM_BOT_TOKEN = ''
+TELEGRAM_CHAT_ID = ''
 bot = Bot(token=TELEGRAM_BOT_TOKEN)
 
 async def send_telegram_alert(image_path, junction_id):
@@ -111,7 +104,7 @@ def process_junction(junction_id):
         # Read image (DO NOT RESIZE HERE)
         img = cv2.imread(path)
 
-        # Vehicle detection with YOLO (resize here if needed for YOLO)
+        # Vehicle detection with YOLO 
         img_for_yolo = cv2.resize(img, (640, 640))  # YOLO expects 640x640
         results = model.predict(img_for_yolo, conf=0.5)
         total_time = 0
